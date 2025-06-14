@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎉 Meme Fact-Check Concert 🎤</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome CDN for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        /* Custom Concert Theme Styles */
+        body {
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1);
+            font-family: 'Comic Sans MS', 'Arial', sans-serif;
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+        }
+        .concert-crowd {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: url('https://i.imgur.com/7kZ5Y6x.png') repeat-x;
+            animation: crowdMove 10s linear infinite;
+            z-index: -1;
+            opacity: 0.6;
+        }
+        @keyframes crowdMove {
+            0% { background-position: 0 0; }
+            100% { background-position: -1000px 0; }
+        }
+        .spotlight {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255,255,255,0.3), transparent);
+            animation: spotlightMove 5s ease-in-out infinite;
+            z-index: -1;
+        }
+        @keyframes spotlightMove {
+            0%, 100% { transform: translate(-50%, 0) rotate(0deg); }
+            50% { transform: translate(-50%, 50px) rotate(10deg); }
+        }
+        .meme-emoji {
+            position: absolute;
+            font-size: 2rem;
+            animation: floatEmoji 3s ease-in-out infinite;
+        }
+        @keyframes floatEmoji {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        .table-row:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.02);
+            transition: all 0.3s ease;
+        }
+        .feedback-form {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+        /* Hide default file input */
+        .custom-file-input {
+            display: none;
+        }
+        .custom-file-label {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .custom-file-label:hover {
+            background-color: #ff4757;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 relative">
+    <!-- Concert Crowd Background -->
+    <div class="concert-crowd"></div>
+    <!-- Spotlight Effect -->
+    <div class="spotlight"></div>
+    <!-- Floating Meme Emojis -->
+    <div class="meme-emoji" style="top: 10%; left: 5%;">😂</div>
+    <div class="meme-emoji" style="top: 20%; right: 5%;">🔥</div>
+    <div class="meme-emoji" style="bottom: 15%; left: 10%;">🐶</div>
+    <div class="meme-emoji" style="bottom: 25%; right: 10%;">😎</div>
+
+    <!-- Header -->
+    <header class="text-center mb-8 animate-bounce">
+        <h1 class="text-5xl font-bold text-yellow-300 drop-shadow-lg">🎉 Meme Fact-Check Concert 🎤</h1>
+        <p class="text-xl text-pink-200 mt-2">Check the truth behind your favorite Instagram memes! 😜</p>
+    </header>
+
+    <!-- Controls Section -->
+    <div class="w-full max-w-4xl bg-black bg-opacity-50 p-6 rounded-lg mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+        <!-- Sort Options -->
+        <div class="flex flex-col sm:flex-row gap-2">
+            <label for="sortBy" class="text-yellow-300">Sort By:</label>
+            <select id="sortBy" class="p-2 rounded bg-gray-800 text-white border border-pink-500">
+                <option value="fact_score_desc">Fact Score (High to Low)</option>
+                <option value="fact_score_asc">Fact Score (Low to High)</option>
+                <option value="upvotes_desc">Upvotes (High to Low)</option>
+                <option value="upvotes_asc">Upvotes (Low to High)</option>
+            </select>
+        </div>
+        <!-- Filter by Score -->
+        <div class="flex flex-col sm:flex-row gap-2">
+            <label for="scoreFilter" class="text-yellow-300">Filter Score:</label>
+            <input type="number" id="scoreFilterMin" placeholder="Min (0-100)" min="0" max="100" class="p-2 rounded bg-gray-800 text-white border border-pink-500 w-24">
+            <input type="number" id="scoreFilterMax" placeholder="Max (0-100)" min="0" max="100" class="p-2 rounded bg-gray-800 text-white border border-pink-500 w-24">
+        </div>
+        <!-- Download Button -->
+        <button id="downloadJson" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded flex items-center gap-2">
+            <i class="fas fa-download"></i> Download JSON
+        </button>
+    </div>
+
+    <!-- Fact-Check Table -->
+    <div class="w-full max-w-4xl overflow-x-auto bg-black bg-opacity-50 p-6 rounded-lg">
+        <table class="w-full text-left text-white">
+            <thead>
+                <tr class="bg-pink-600">
+                    <th class="p-3">Meme Text</th>
+                    <th class="p-3">Fact Score</th>
+                    <th class="p-3">Details</th>
+                    <th class="p-3">Upvotes</th>
+                    <th class="p-3">Downvotes</th>
+                    <th class="p-3">Share</th>
+                </tr>
+            </thead>
+            <tbody id="factCheckTable"></tbody>
+        </table>
+        <!-- Pagination -->
+        <div class="flex justify-between items-center mt-4">
+            <button id="prevPage" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50">Previous</button>
+            <span id="pageInfo" class="text-yellow-300"></span>
+            <button id="nextPage" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50">Next</button>
+        </div>
+    </div>
+
+    <!-- Feedback Section -->
+    <div class="w-full max-w-4xl mt-8 feedback-form p-6 rounded-lg">
+        <h2 class="text-3xl font-bold text-yellow-300 mb-4">🎤 Drop Your Feedback! 😍</h2>
+        <form id="feedbackForm" class="flex flex-col gap-4">
+            <input type="text" id="feedbackName" placeholder="Your Name (Optional)" class="p-2 rounded bg-gray-800 text-white border border-pink-500">
+            <textarea id="feedbackText" placeholder="Tell us what you think about the Meme Concert! 🎉" rows="4" class="p-2 rounded bg-gray-800 text-white border border-pink-500"></textarea>
+            <!-- File Upload for Feedback -->
+            <div class="flex items-center gap-2">
+                <label for="feedbackFile" class="custom-file-label bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded flex items-center gap-2">
+                    <i class="fas fa-upload"></i> Upload Meme (Optional)
+                </label>
+                <input type="file" id="feedbackFile" accept="image/*" class="custom-file-input">
+                <span id="fileName" class="text-yellow-300"></span>
+            </div>
+            <button type="submit" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-4 rounded">Submit Feedback</button>
+        </form>
+    </div>
+
+    <!-- Embedded JSON Data -->
+    <script>
+        const factChecksData = {
+            "fact_checks": [
+                {"id":"c57e0b3d-cd80-4589-9a15-0ef22a9eaf8e","image_hash":"hash_168","text_extracted":"Meme text sample 1","fact_score":86.86802822703623,"details":"Image verified via mock analysis. Source: Sample 1.","user_id":"u1","timestamp":"2025-06-14T23:22:00Z","votes":{"upvotes":10,"downvotes":2}},
+                {"id":"75cb4da3-7340-4b30-990f-f6692e1988da","image_hash":"hash_223","text_extracted":"Meme text sample 2","fact_score":68.62197587969638,"details":"Image verified via mock analysis. Source: Sample 2.","user_id":"u2","timestamp":"2025-06-14T23:22:00Z","votes":{"upvotes":11,"downvotes":4}},
+                {"id":"efade4b5-4a53-4d47-bf85-c73bb36466d9","image_hash":"hash_335","text_extracted":"Meme text sample 3","fact_score":89.13774502838166,"details":"Image verified via mock analysis. Source: Sample 3.","user_id":"u3","timestamp":"2025-06-14T23:22:00Z","votes":{"upvotes":4,"downvotes":2}},
+                // ... Truncated for brevity, include all 10,000 entries here ...
+                {"id":"171bf0fa-c906-4826-b029-efe32db01146","image_hash":"hash_914","text_extracted":"Meme text sample 10000","fact_score":97.36213615967085,"details":"Image verified via mock analysis. Source: Sample 10000.","user_id":"u10000","timestamp":"2025-06-14T23:22:00Z","votes":{"upvotes":10,"downvotes":3}}
+            ]
+        };
+
+        // Table Rendering and Logic
+        const tableBody = document.getElementById('factCheckTable');
+        const sortBySelect = document.getElementById('sortBy');
+        const scoreFilterMin = document.getElementById('scoreFilterMin');
+        const scoreFilterMax = document.getElementById('scoreFilterMax');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const pageInfo = document.getElementById('pageInfo');
+        const downloadJsonBtn = document.getElementById('downloadJson');
+        const feedbackForm = document.getElementById('feedbackForm');
+        const feedbackFile = document.getElementById('feedbackFile');
+        const fileNameSpan = document.getElementById('fileName');
+
+        let currentPage = 1;
+        const itemsPerPage = 50;
+        let filteredData = [...factChecksData.fact_checks];
+
+        // Render Table
+        function renderTable(data, page) {
+            tableBody.innerHTML = '';
+            const start = (page - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const paginatedData = data.slice(start, end);
+
+            paginatedData.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'table-row';
+                row.innerHTML = `
+                    <td class="p-3">${item.text_extracted}</td>
+                    <td class="p-3">${item.fact_score.toFixed(2)}</td>
+                    <td class="p-3">${item.details}</td>
+                    <td class="p-3">${item.votes.upvotes}</td>
+                    <td class="p-3">${item.votes.downvotes}</td>
+                    <td class="p-3 flex gap-2">
+                        <button onclick="shareResult('${item.text_extracted}', ${item.fact_score})" class="text-blue-300 hover:text-blue-500">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            const totalPages = Math.ceil(data.length / itemsPerPage);
+            pageInfo.textContent = `Page ${page} of ${totalPages}`;
+            prevPageBtn.disabled = page === 1;
+            nextPageBtn.disabled = page === totalPages;
+        }
+
+        // Sort Data
+        function sortData(data, sortBy) {
+            return data.sort((a, b) => {
+                if (sortBy === 'fact_score_desc') return b.fact_score - a.fact_score;
+                if (sortBy === 'fact_score_asc') return a.fact_score - b.fact_score;
+                if (sortBy === 'upvotes_desc') return b.votes.upvotes - a.votes.upvotes;
+                if (sortBy === 'upvotes_asc') return a.votes.upvotes - b.votes.upvotes;
+                return 0;
+            });
+        }
+
+        // Filter Data
+        function filterData(data) {
+            const min = parseFloat(scoreFilterMin.value) || 0;
+            const max = parseFloat(scoreFilterMax.value) || 100;
+            return data.filter(item => item.fact_score >= min && item.fact_score <= max);
+        }
+
+        // Update Table
+        function updateTable() {
+            filteredData = filterData(factChecksData.fact_checks);
+            filteredData = sortData(filteredData, sortBySelect.value);
+            currentPage = 1;
+            renderTable(filteredData, currentPage);
+        }
+
+        // Share Result
+        function shareResult(text, score) {
+            const shareText = `Check this meme: "${text}" with a Fact Score of ${score.toFixed(2)}! 🎉 #MemeConcert`;
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Meme Fact-Check',
+                    text: shareText,
+                    url: window.location.href
+                }).catch(console.error);
+            } else {
+                // Fallback: Open share options
+                const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+                const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+                const instagramUrl = `https://www.instagram.com/`; // Instagram doesn't support direct sharing via URL
+                window.open(xUrl, '_blank');
+                window.open(whatsappUrl, '_blank');
+                alert('To share on Instagram, copy this text and post it: ' + shareText);
+            }
+        }
+
+        // Download JSON
+        downloadJsonBtn.addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify(factChecksData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'fact_checks.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Feedback Form Submission
+        feedbackForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('feedbackName').value;
+            const text = document.getElementById('feedbackText').value;
+            const file = feedbackFile.files[0];
+            const feedback = { name, text, file: file ? file.name : null };
+            console.log('Feedback Submitted:', feedback);
+            alert('Thanks for your feedback! 🎤 Keep rocking the Meme Concert! 😎');
+            feedbackForm.reset();
+            fileNameSpan.textContent = '';
+        });
+
+        // File Input Feedback
+        feedbackFile.addEventListener('change', () => {
+            fileNameSpan.textContent = feedbackFile.files[0]?.name || '';
+        });
+
+        // Event Listeners
+        sortBySelect.addEventListener('change', updateTable);
+        scoreFilterMin.addEventListener('input', updateTable);
+        scoreFilterMax.addEventListener('input', updateTable);
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable(filteredData, currentPage);
+            }
+        });
+        nextPageBtn.addEventListener('click', () => {
+            if (currentPage < Math.ceil(filteredData.length / itemsPerPage)) {
+                currentPage++;
+                renderTable(filteredData, currentPage);
+            }
+        });
+
+        // Initial Render
+        updateTable();
+    </script>
+</body>
+</html>
